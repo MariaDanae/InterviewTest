@@ -1,0 +1,173 @@
+Question A
+Your goal for this question is to write a program that accepts two lines (x1,x2) and (x3,x4) on the x-axis and returns whether they overlap. As an example, (1,5) and (2,6) overlaps but not (1,5) and (6,8).
+
+#include <iostream>
+#include <cstdio>
+using namespace std;
+
+//Overlap function
+//1.overlaps function created to keep the main code cleaner
+//2.Accepts 2 arrays
+//3.Compares range of arrays. Overlaps occur when starting position of one range is less than starting position of the second range AND greater than the end position of the second range (ie. the starting position of one range is inbetween the starting and end position of the second range)(ex: a=1,5 and b=4,7 => 4 is found between 1 and 5)
+// Note that code works when a=1,5 b=3,6 and when a=3,6 and b=1,5.
+//4.Assumption is that the return value is a message. This function can be converted to a bool to return yes/no (1/0) which can be used in future code.
+void overlaps(int* a, int*b){
+  if ((a[0] < b[0] && a[1] > b[0]) || (b[0] < a[0] && b[1] > a[0])) {
+    cout << "Range overlaps on x-axis" << endl;
+  } else {
+    cout << "Range does not overlap on x-axis" << endl;
+  }
+}
+
+int main() {
+    int a[2],b[2];   // declare array of size 2
+    cout << "Enter first array" <<endl;
+    cin >> a[0] >> a[1];
+    cout << "Enter second array" << endl;
+    cin >> b[0] >> b[1];
+
+    int a[2] = {1,5};
+    int b[2] = {3,4};
+
+    overlaps(a,b);
+
+    return 0;
+}
+
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+Question B
+The goal of this question is to write a software library that accepts 2 version string as input and returns whether one is greater than, equal, or less than the other. As an example: “1.2” is greater than “1.1”. Please provide all test cases you could think of.
+
+// Test cases
+// Assumption that 1.1 and 1.2 can be viewed as book chapters and subchapters.
+// a = "1,1" b="1.2" gives " A greater than B" since 1.1 comes before 1.2
+// a = "1.1" b="1.1.1" gives "A greater than B" since 1.1 comes before 1.1.1
+// a = "10.2" b="10.2" gives "A and B are the same"
+// a = "10.2" b="1.1" gives "B is greater than A" since 1.1 coes before 10.2
+
+#include <cmath>
+#include <cstdio>
+#include <vector>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+//Vector Function
+//1. chose vector as return type to accomodate mutliple levels of dots (ex:10.2.4.2)
+vector<int> separateNumbersByDot(string a){
+  vector<int> v;
+  string v_s,v_dot;
+  int v_i;
+  for (int i = 0; i < a.length(); i++) {        // go through the length of string
+    v_dot = a[i];
+    if (v_dot != ".") {                        //handle string before dot to account for numerous digits (ex: "10", "1000", etc.)
+      v_s += a[i];
+    }
+    else{
+      v_i = atoi(v_s.c_str());                // convert string to int (ex: "10" to 10)
+      v.push_back(v_i);                       // place int into vector
+      v_s = "";                               // reset string for next round post dot
+    }
+  }
+  v_i = atoi(v_s.c_str());    //handles the last value of string since dot does not follow
+  v.push_back(v_i);
+  return v;
+}
+
+int main() {
+  string a, b;
+  int x_bigger, x_smaller;
+  string status;
+
+  cout<< "Enter string A: " <<endl;
+  cin >> a;
+  cout << "Enter string B: " << endl;
+  cin >> b;
+
+  //separate strings into vectors
+  vector<int> a_separated = separateNumbersByDot(a);
+  vector<int> b_separated = separateNumbersByDot(b);
+
+  //x_bigger refers to size of vector that is longer. ex: 10.2.6.2 is longer than 10.2
+  x_bigger = a_separated.size() > b_separated.size()? a_separated.size() : b_separated.size();
+  
+  // for loop using bigger string to account for situations like: 10.2 comes before 10.2.1
+  for(int i=0; i<x_bigger; i++){
+      if(a_separated[i]>b_separated[i]){
+          if(i <= x_smaller){
+               status = "A is greater than B";       //ex: A "1.1" > B "1.2"
+               break;
+          }
+          else if (i > x_smaller) {
+              status = "B is greater than A";       //ex: A "1.1.1" < B "1.1"
+              break;
+          }
+      } else if (a_separated[i] < b_separated[i]) {
+        if (i <= x_smaller) {
+          status = "B is greater than A";            // ex: A "1.2" < B "1.1"
+          break;
+        } else if (i > x_smaller) {
+          status = "A is greater than B";            // ex: A "1.1" < B "1.1.1"
+          break;
+        }
+  }
+  }
+  if(status.empty())
+  {
+      status = "A and B are the same";             // if after this for loop there was no difference, assumption is that A and B must be the same
+  }
+
+  //print everything out
+  cout << "A: ";
+  for (vector<int>::const_iterator i = a_separated.begin();
+       i != a_separated.end(); ++i) {
+    cout << *i << ' ';
+  }
+  cout << "B: ";
+  for (vector<int>::const_iterator i = a_separated.begin();
+       i != a_separated.end(); ++i) {
+    cout << *i << ' ';
+  }
+  cout << status <<endl;
+
+
+  return 0;
+}
+
+
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+
+Question C
+At Ormuco, we want to optimize every bits of software we write. Your goal is to write a new library that can be integrated to the Ormuco stack. Dealing with network issues everyday, latency is our biggest problem. Thus, your challenge is to write a new Geo Distributed LRU (Least Recently Used) cache with time expiration. This library will be used extensively by many of our services so it needs to meet the following criteria:
+
+    1 - Simplicity. Integration needs to be dead simple.
+    2 - Resilient to network failures or crashes.
+    3 - Near real time replication of data across Geolocation. Writes need to be in real time.
+    4 - Data consistency across regions
+    5 - Locality of reference, data should almost always be available from the closest region
+    6 - Flexible Schema
+    7 - Cache can expire 
+
+Since I haven't dealt with caches, it will be quicker to discuss my thought process as oppose to learn how to implement all aspects of this problem.
+Approach:
+- LRU cache is usually implemeted using queues (doubly-linked lists) and hash tables to give O(1).
+- Mutlithreading can be used such that while no new data is coming in, expired timestamps can be removied from the tail end of the queue
+- Assuming network refers to communication between a master station and remote stations, a heartbeat or tcp comminucation protocol can be integrated to catch when a network fails.
+  If network refers to local drivers, then Hadoop should be integrated since it handles the data to another machine when a machine fails.
+- Data consistency is not explained in the question. If data consistency refers to unstructured data, if using Hadoop, Pig could be used.
+  If data consistency refers to type inputed (ex: geolocation should be inputted as an int as oppose to a string), a simple casting should be in place in case. A try-catch should be place to handle exeptions.
+- For high velocity data (which is real-time), Flume in Hadoop can be used or Spark.
+- Timestamp used before data is handled in LRU cache.
+- Another option is using NoSQL instead of relational database SQL.
+  A nice flexible schema would be column based database since all entries would be in the family of geolocation but can have different row entries such as Province instead of State
+
+
+
+
+
+
+
+
+
